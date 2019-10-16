@@ -15,11 +15,11 @@ C
       
       CALL EXNAME (IOPT,PARMOD,PSI,X,Y,Z,BXGSW,BYGSW,BZGSW)
       CALL INNAME (X,Y,Z,HXGSW,HYGSW,HZGSW)
-
       BX=BXGSW+HXGSW
       BY=BYGSW+HYGSW
       BZ=BZGSW+HZGSW
       B=SQRT(BX**2+BY**2+BZ**2)
+      
       RETURN
       END
       

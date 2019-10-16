@@ -88,7 +88,7 @@ C     PARAMOD: 3: IMF By (NANOTESLA)
 C     PARAMOD: 4: IMF Bz (NANOTESLA)
       DO 223 i=10,13
       call get_command_argument(i,argv)
-      read(argv,*) PARMOD(i-8)
+      read(argv,*) PARMOD(i-9)
  223  CONTINUE
 
 C
@@ -182,7 +182,7 @@ C   CONVERT BACK TO GEO COORINDATES
       END IF
       
 C   OUTPUT THE RESULTS
-C   XGEO, YGEO, ZGEO [in RE], BXGEO, BYGEO, BR(GSW) [in nT]        
+C   XGEO, YGEO, ZGEO [in RE], BXGEO, BYGEO, BR(GSW) [in nT]
        PRINT '(I2,16F20.5)',FOOTNUM, XXGEO(1), YYGEO(1), ZZGEO(1),
      *  XXGEO(M), YYGEO(M), ZZGEO(M),  
      *  0.5*(XXGEO(EQL)+XXGEO(EQL+1)),

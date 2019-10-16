@@ -88,7 +88,7 @@ C     PARAMOD: 3: IMF By (NANOTESLA)
 C     PARAMOD: 4: IMF Bz (NANOTESLA)
       DO 223 i=10,13
       call get_command_argument(i,argv)
-      read(argv,*) PARMOD(i-8)
+      read(argv,*) PARMOD(i-9)
  223  CONTINUE
 
 C
