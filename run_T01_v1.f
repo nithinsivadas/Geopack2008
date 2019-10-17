@@ -1,10 +1,10 @@
-C
+C INPUT is a datafile: inputT.dat
 C ############################################################################
 C #    THE MAIN PROGRAMS BELOW GIVE TWO EXAMPLES OF TRACING FIELD LINES      #
 C #      USING THE GEOPACK-2008 SOFTWARE  (release of Feb 08, 2008)              #
 C ############################################################################
 C
-      PROGRAM RUN_T96
+      PROGRAM RUN_T01
 
 C   INPUT
 C   IYEAR, IDAY, IHOUR, IMIN, ISEC,
@@ -23,7 +23,7 @@ C   IN THIS EXAMPLE IT IS ASSUMED THAT WE KNOW GEOGRAPHIC COORDINATES OF A
 C   FIELD LINE < 60 RE FROM THE EARTH'S SURFACE AND TRACE THAT LINE FOR A SPECIFIED
 C   MOMENT OF UNIVERSAL TIME, USING A FULL IGRF EXPANSION FOR THE INTERNAL FIELD
 C
-      PARAMETER (LMAX=1000)
+      PARAMETER (LMAX=500)
 C      PARAMETER (LMAXH=500)
 C
 C  LMAX IS THE UPPER LIMIT ON THE NUMBER OF FIELD LINE POINTS RETURNED BY THE TRACER.
@@ -38,16 +38,16 @@ C
       DIMENSION BXGEO(LMAX),BYGEO(LMAX),BZGEO(LMAX)
       DIMENSION BR(LMAX),BTHETA(LMAX),BPHI(LMAX),BRNORM(LMAX)
       real :: XGEO(3), ALT_KM, DIR, R0
-      integer :: i, EQL, FOOTNUM
+      integer :: i, EQL, FOOTNUM,  inputFileID, outputFileID
       character(80) :: argv
 
 c    Be sure to include an EXTERNAL statement in your codes, specifying the names
 c    of external and internal field model subroutines in the package, as shown below.
-c    In this example, the external and internal field models are T96_01 and IGRF_GSW_08,
+c    In this example, the external and internal field models are T01_01 and IGRF_GSW_08,
 c    respectively. Any other models can be used, provided they have the same format
 c    and the same meaning of the input/output parameters.
 c
-      EXTERNAL T96_01,IGRF_GSW_08
+      EXTERNAL T01_01,IGRF_GSW_08
 
 C  IN THE ABSENCE OF RELIABLE MEASURMENTS - DOCUMENTATION INSTRUCTS TO USE THE ABOVE
 C  SOLAR WIND VELOCITY IN GSE
@@ -60,46 +60,22 @@ C  VGSEY=VGSEY+29.78
 C   DEFINE THE UNIVERSAL TIME AND PREPARE THE COORDINATE TRANSFORMATION PARAMETERS
 C   BY INVOKING THE SUBROUTINE RECALC_08: IN THIS PARTICULAR CASE WE TRACE A LINE
 C
-      call get_command_argument(1,argv)
-      read(argv,*) IYEAR
-      call get_command_argument(2,argv)
-      read(argv,*) IDAY
-      call get_command_argument(3,argv)
-      read(argv,*) IHOUR
-      call get_command_argument(4,argv)
-      read(argv,*) MIN
-      call get_command_argument(5,argv)
-      read(argv,*) ISEC
+      open (inputFileID, FILE='inputT.dat',STATUS='OLD')
+      open (outputFileID, FILE='outputF.dat')
 
-C   GET GEO (X,Y,Z) COORDINATES OF THE POINT
-      DO 222 i=6,8
-      call get_command_argument(i,argv)
-      read(argv,*) XGEO(i-5)
- 222  CONTINUE
+      Do
+        read (inputFileID,100,End=1) IYEAR, IDAY, IHOUR, MIN, ISEC,
+     *  (XGEO(L),L=1,3), ALT_KM, (PARMOD(L),L=1,10)
 
-C    GET ALTITUDE OF TERMINATION OF THE TRACING
-C
-      call get_command_argument(9,argv)
-      read(argv,*) ALT_KM
-
-C     PARAMOD: 1: SOLAR WIND RAM PRESSURE (NANOPASCALS)
-C     PARAMOD: 2: DST-INDEX
-C     PARAMOD: 3: IMF By (NANOTESLA)
-C     PARAMOD: 4: IMF Bz (NANOTESLA)
-      DO 223 i=10,13
-      call get_command_argument(i,argv)
-      read(argv,*) PARMOD(i-9)
- 223  CONTINUE
+c        print 100, IYEAR, IDAY, IHOUR, MIN, ISEC,
+c     *  (XGEOI(L),L=1,3), ALT_KM, (PARMOD(L),L=1,10)
 
 C
       CALL RECALC_08 (IYEAR,IDAY,IHOUR,MIN,ISEC,VGSEX,VGSEY,VGSEZ)
 
-C   TRANSFORM GEOGRAPHICAL GEOCENTRIC COORDS INTO SOLAR WIND MAGNETOSPHERIC ONES:
-C
       CALL GEOGSW_08 (XGEO(1),XGEO(2),XGEO(3),XGSW,YGSW,ZGSW,1)
-C
+
 c   SPECIFY TRACING PARAMETERS:
-C
       DSMAX=1.0
 C               (MAXIMAL SPACING BETWEEN THE FIELD LINE POINTS SET EQUAL TO 1 RE)
 C
@@ -114,19 +90,14 @@ C                   I.E. ON THE EARTH'S SURFACE)
       IOPT=0
 C           (IN THIS EXAMPLE IOPT IS JUST A DUMMY PARAMETER,
 C                 WHOSE VALUE DOES NOT MATTER)
-C
 
-C   TRACE THE FIELD LINE:
-C    (TRACE THE LINE WITH A FOOTPOINT PARALLEL (-1) - SOUTHERN HEMISPHERE
-C     OR ANTIPARALLEL (+1) - NORTHERN HEMISPHERE TO THE MAGNETIC FIELD )
-
-C     GEO NORTHERN TRACE
+C     NORTHERN TRACE
       CALL TRACE_08 (XGSW,YGSW,ZGSW,-1.0,DSMAX,ERR,RLIM,R0,IOPT,
-     * PARMOD,T96_01,IGRF_GSW_08,XFN,YFN,ZFN,XXN,YYN,ZZN,MN,LMAX)
+     * PARMOD,T01_01,IGRF_GSW_08,XFN,YFN,ZFN,XXN,YYN,ZZN,MN,LMAX)
 
-C     GEO SOUTHERN TRACE
+C     SOUTHERN TRACE
       CALL TRACE_08 (XGSW,YGSW,ZGSW,+1.0,DSMAX,ERR,RLIM,R0,IOPT,
-     * PARMOD,T96_01,IGRF_GSW_08,XFS,YFS,ZFS,XXS,YYS,ZZS,MS,LMAX)
+     * PARMOD,T01_01,IGRF_GSW_08,XFS,YFS,ZFS,XXS,YYS,ZZS,MS,LMAX)
 
       RFS = SQRT(XFS**2+YFS**2+ZFS**2)
       RFN = SQRT(XFN**2+YFN**2+ZFN**2)
@@ -149,12 +120,14 @@ C   CREATE FULL TRACE
 C   CALCULATE RADIAL B CHANGE
       DO 225 L =1,M
       CALL BVALUE (XX(L),YY(L),ZZ(L),BX(L),BY(L),BZ(L),B(L),
-     * IOPT,PARMOD,T96_01,IGRF_GSW_08)
+     * IOPT,PARMOD,T01_01,IGRF_GSW_08)
       CALL BCARSP_08 (XX(L),YY(L),ZZ(L),BX(L),BY(L),BZ(L),
      * BR(L),BTHETA(L),BPHI(L))
       BRNORM(L) = BR(L)/B(L)
  225  CONTINUE
 
+C   EQL is the field line trace index where the satellite crosses the
+C     magnetic equator
       DO 228 L =1,M-1
       IF (BRNORM(L)*BRNORM(L+1) .LT. 0.0) THEN
             EQL = L
@@ -168,29 +141,61 @@ C   CONVERT BACK TO GEO COORINDATES
  224  CONTINUE
 
       FOOTNUM = 0
+      XNFGEO = 99999
+      YNFGEO = 99999
+      ZNFGEO = 99999
+      XSFGEO = 99999
+      YSFGEO = 99999
+      ZSFGEO = 99999
+      XEQGEO = 99999
+      YEQGEO = 99999
+      ZEQGEO = 99999
+      BXEQGEO = 99999
+      BYEQGEO = 99999
+      BZEQGEO = 99999
 
       IF (RFN .LT. R0+ALT_KM/6378.1) THEN
           IF (RFN .GT. 1.0) THEN
             FOOTNUM = FOOTNUM+1
+            XNFGEO = XXGEO(1)
+            YNFGEO = YYGEO(1)
+            ZNFGEO = ZZGEO(1)
           END IF
       END IF
 
       IF (RFS .LT. R0+ALT_KM/6378.1) THEN
           IF (RFS .GT. 1.0) THEN
             FOOTNUM = FOOTNUM+1
+            XSFGEO = XXGEO(M)
+            YSFGEO = YYGEO(M)
+            ZSFGEO = ZZGEO(M)
           END IF
+      END IF
+
+      IF (FOOTNUM .EQ. 2) THEN
+        XEQGEO = 0.5*(XXGEO(EQL)+XXGEO(EQL+1))
+        YEQGEO = 0.5*(YYGEO(EQL)+YYGEO(EQL+1))
+        ZEQGEO = 0.5*(ZZGEO(EQL)+ZZGEO(EQL+1))
+        BXEQGEO = 0.5*(BXGEO(EQL)+BXGEO(EQL+1))
+        BYEQGEO = 0.5*(BYGEO(EQL)+BYGEO(EQL+1))
+        BZEQGEO = 0.5*(BZGEO(EQL)+BZGEO(EQL+1))
       END IF
 
 C   OUTPUT THE RESULTS
 C   XGEO, YGEO, ZGEO [in RE], BXGEO, BYGEO, BR(GSW) [in nT]
-       PRINT '(I2,16F20.5)',FOOTNUM, XXGEO(1), YYGEO(1), ZZGEO(1),
-     *  XXGEO(M), YYGEO(M), ZZGEO(M),
-     *  0.5*(XXGEO(EQL)+XXGEO(EQL+1)),
-     * (YYGEO(EQL)+YYGEO(EQL+1))*0.5, (ZZGEO(EQL)+ZZGEO(EQL+1))*0.5,
-     * (BXGEO(EQL)+BXGEO(EQL+1))*0.5,(BYGEO(EQL)+BYGEO(EQL+1))*0.5,
-     * (BZGEO(EQL)+BZGEO(EQL+1))*0.5,(BRNORM(EQL)+BRNORM(EQL+1))*0.5,
-     * BXGEO(MN),BYGEO(MN),BZGEO(MN)
+       WRITE (outputFILEID,101) FOOTNUM,
+     *  XNFGEO, YNFGEO, ZNFGEO,
+     *  XSFGEO, YSFGEO, ZSFGEO,
+     *  XEQGEO, YEQGEO, ZEQGEO,
+     *  BXEQGEO, BYEQGEO, BZEQGEO,
+     *  (BRNORM(EQL)+BRNORM(EQL+1))*0.5,
+     *  BXGEO(MN),BYGEO(MN),BZGEO(MN)
 C       PRINT '(7F20.5)',(XXGEO(L),YYGEO(L),ZZGEO(L),
 C     * BXGEO(L),BYGEO(L),BZGEO(L),BR(L),L=1,M)
-
+      end do
+      CLOSE ( inputFileID, STATUS='KEEP')
+      CLOSE ( outputFileID, STATUS='KEEP')
+ 1    print *,'Successfully completed calculation'
+ 100  FORMAT (I4,1x,I3,3(1x,I2),14(1x,F8.2))
+ 101  FORMAT (I2,16(1x,F8.2))
       END
